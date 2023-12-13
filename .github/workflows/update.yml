@@ -1,0 +1,45 @@
+name: Update ipban.txt
+
+on:
+  schedule:
+    - cron: '0 0 1 * *' # This will run the first day of every month
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Run script
+      run: |
+        # Download the file
+        wget https://github.com/DandelionSprout/adfilt/raw/master/AdGuardHomeDisallowedIPs.txt -O newfile.txt
+
+        # Check if oldfile.txt exists in the repository
+        if [ ! -f oldfile.txt ]; then
+            echo "oldfile.txt does not exist. Creating a new one."
+            touch oldfile.txt
+        fi
+
+        # Check if there are updates
+        if cmp -s "newfile.txt" "oldfile.txt"; then
+            echo "The files are the same. No updates."
+        else
+            echo "The files are different. There are updates."
+
+            # Remove unwanted texts
+            grep -Pv '^(!.*)?$' newfile.txt | uniq > ipban.txt
+
+            # Commit and push the changes
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add ipban.txt
+            git commit -m "Update ipban.txt"
+            git push
+        fi
+
+        # Replace oldfile.txt with newfile.txt for the next comparison
+        mv newfile.txt oldfile.txt
