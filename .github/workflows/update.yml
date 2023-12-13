@@ -3,7 +3,10 @@ name: Update ipban.txt
 on:
   schedule:
     - cron: '0 0 1 * *' # This will run the first day of every month
-  workflow_dispatch:
+  workflow_dispatch: # This allows the workflow to be run manually
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -30,8 +33,8 @@ jobs:
         else
             echo "The files are different. There are updates."
 
-            # Remove unwanted texts
-            grep -Pv '^(!.*)?$' newfile.txt | uniq > ipban.txt
+            # Remove unwanted texts and duplicates
+            grep -Pv '^(!.*)?$' newfile.txt | sort | uniq > ipban.txt
 
             # Commit and push the changes
             git config --local user.email "action@github.com"
