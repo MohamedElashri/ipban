@@ -3,7 +3,7 @@ name: Update ipban.txt
 on:
   schedule:
     - cron: '0 0 1 * *' # This will run the first day of every month
-  workflow_dispatch: # This allows the workflow to be run manually
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,10 +21,11 @@ jobs:
         # Download the file
         wget https://github.com/DandelionSprout/adfilt/raw/master/AdGuardHomeDisallowedIPs.txt -O newfile.txt
 
-        # Check if oldfile.txt exists in the repository
+        # Check if oldfile.txt exists and is tracked in the repository
         if [ ! -f oldfile.txt ]; then
-            echo "oldfile.txt does not exist. Creating a new one."
+            echo "oldfile.txt does not exist or is not tracked. Creating a new one and tracking."
             touch oldfile.txt
+            git add oldfile.txt
         fi
 
         # Check if there are updates
@@ -46,3 +47,6 @@ jobs:
 
         # Replace oldfile.txt with newfile.txt for the next comparison
         mv newfile.txt oldfile.txt
+        git add oldfile.txt
+        git commit -m "Update oldfile.txt"
+        git push
