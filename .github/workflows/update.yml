@@ -21,32 +21,32 @@ jobs:
         # Download the file
         wget https://github.com/DandelionSprout/adfilt/raw/master/AdGuardHomeDisallowedIPs.txt -O newfile.txt
 
-        # Check if oldfile.txt exists and is tracked in the repository
-        if [ ! -f oldfile.txt ]; then
-            echo "oldfile.txt does not exist or is not tracked. Creating a new one and tracking."
-            touch oldfile.txt
-            git add oldfile.txt
+        # Generate hash for the new file
+        NEWFILE_HASH=$(sha256sum newfile.txt | awk '{ print $1 }')
+
+        # Check if oldfile.txt exists
+        if [ -f oldfile.txt ]; then
+            # Generate hash for the old file
+            OLDFILE_HASH=$(sha256sum oldfile.txt | awk '{ print $1 }')
+
+            # Compare hashes
+            if [ "$NEWFILE_HASH" = "$OLDFILE_HASH" ]; then
+                echo "The files are the same. No updates."
+                exit 0
+            fi
         fi
 
-        # Check if there are updates
-        if cmp -s "newfile.txt" "oldfile.txt"; then
-            echo "The files are the same. No updates."
-        else
-            echo "The files are different. There are updates."
+        echo "The files are different. There are updates."
 
-            # Remove unwanted texts and duplicates
-            grep -Pv '^(!.*)?$' newfile.txt | sort | uniq > ipban.txt
+        # Remove unwanted texts and duplicates
+        grep -Pv '^(!.*)?$' newfile.txt | sort | uniq > ipban.txt
 
-            # Commit and push the changes
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add ipban.txt
-            git commit -m "Update ipban.txt"
-            git push
-        fi
+        # Commit and push the changes
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add ipban.txt
+        git commit -m "Update ipban.txt"
+        git push
 
         # Replace oldfile.txt with newfile.txt for the next comparison
         mv newfile.txt oldfile.txt
-        git add oldfile.txt
-        git commit -m "Update oldfile.txt"
-        git push
